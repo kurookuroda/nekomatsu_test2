@@ -311,6 +311,8 @@ class App:
         self.state = self._load()
         self._on_launch()
 
+        self.audio_unlocked = False                                        
+
         if run:
             pyxel.run(self.update, self.draw)
 
@@ -689,6 +691,12 @@ class App:
 
     # ------------------------------------------------------------ 更新
     def update(self):
+        # 最初のタップで AudioContext を unlock（ブラウザ対策）
+        if not self.audio_unlocked:
+            if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT) or self._keys():
+                self.audio_unlocked = True
+                pyxel.play(3, self.snd_talk_space)  # 無音に近い短い音で unlock
+
         rep = game.advance(self.state, self.clock())
         if rep["ticks"]:
             if rep["ticks"] <= 3:
