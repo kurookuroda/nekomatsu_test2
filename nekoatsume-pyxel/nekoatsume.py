@@ -329,43 +329,57 @@ class App:
     def _play_type_sound(self, ch):
         pyxel.play(3, self.snd_talk_space if ch.isspace() else self.snd_talk)
 
-    # ---- 猫の鳴き声(録音した音声ファイル)
-    def _meow_path(self, stem):
-        """meow_<stem>.wav などの、実在するファイルの名前。無ければ None。"""
-        for ext in MEOW_EXTS:
-            path = os.path.join(MEOW_DIR, "meow_{0}{1}".format(stem, ext))
-            if os.path.exists(path):
-                return path
-        return None
-
-    def _load_meow(self, path):
-        snd = pyxel.Sound()
-        try:
-            snd.pcm(path)
-        except Exception as e:                 # 壊れている・読めない形式のファイルは飛ばす
-            print("鳴き声を読み込めませんでした:", path, e)
-            return None
-        return snd
-
     def _init_meows(self):
-        """録音した鳴き声を読み込む。番号つき(meow_1, meow_2 …)は途切れるまで、専用の声(meow_<名前>)は猫の個性に書かれたぶん。"""
+        """WASMでも鳴る生成音で猫の鳴き声を作る(PCMファイルはブラウザで読めないため)。"""
         self.meow_pool = []
-        for i in range(1, MEOW_MAX + 1):
-            path = self._meow_path(str(i))
-            if path is None:
-                break
-            snd = self._load_meow(path)
-            if snd is not None:
-                self.meow_pool.append(snd)
+        patterns = [
+            ("c3e3g3", "p", "3", "n", 6),   # 高め
+            ("a2c3e3", "p", "3", "n", 6),   # 低め
+            ("g3b3d4", "p", "3", "n", 8),   # 子猫風
+        ]
+        for notes, tone, volume, effect, speed in patterns:
+            snd = pyxel.Sound()
+            snd.set(notes, tone, volume, effect, speed)
+            self.meow_pool.append(snd)
         self.meow_named = {}
-        for spec in game.CATS.values():
-            name = spec.get("voice")
-            if name and name not in self.meow_named:
-                path = self._meow_path(name)
-                snd = self._load_meow(path) if path else None
-                if snd is not None:
-                    self.meow_named[name] = snd
-        print("猫の鳴き声: 番号つき {0} 種類、専用 {1} 種類を読み込みました".format(len(self.meow_pool), len(self.meow_named)))
+    
+    # ---- 猫の鳴き声(録音した音声ファイル)
+    # def _meow_path(self, stem):
+    #     """meow_<stem>.wav などの、実在するファイルの名前。無ければ None。"""
+    #     for ext in MEOW_EXTS:
+    #         path = os.path.join(MEOW_DIR, "meow_{0}{1}".format(stem, ext))
+    #         if os.path.exists(path):
+    #             return path
+    #     return None
+    
+    # def _load_meow(self, path):
+    #     snd = pyxel.Sound()
+    #     try:
+    #         snd.pcm(path)
+    #     except Exception as e:                 # 壊れている・読めない形式のファイルは飛ばす
+    #         print("鳴き声を読み込めませんでした:", path, e)
+    #         return None
+    #     return snd
+
+    # def _init_meows(self):
+    #     """録音した鳴き声を読み込む。番号つき(meow_1, meow_2 …)は途切れるまで、専用の声(meow_<名前>)は猫の個性に書かれたぶん。"""
+    #     self.meow_pool = []
+    #     for i in range(1, MEOW_MAX + 1):
+    #         path = self._meow_path(str(i))
+    #         if path is None:
+    #             break
+    #         snd = self._load_meow(path)
+    #         if snd is not None:
+    #             self.meow_pool.append(snd)
+    #     self.meow_named = {}
+    #     for spec in game.CATS.values():
+    #         name = spec.get("voice")
+    #         if name and name not in self.meow_named:
+    #             path = self._meow_path(name)
+    #             snd = self._load_meow(path) if path else None
+    #             if snd is not None:
+    #                 self.meow_named[name] = snd
+    #     print("猫の鳴き声: 番号つき {0} 種類、専用 {1} 種類を読み込みました".format(len(self.meow_pool), len(self.meow_named)))
 
     def _meow_for(self, cat_id):
         """その猫の声。専用の声があればそれ、無ければ番号つきの声から猫IDで決める(同じ猫はいつも同じ声)。無ければ None。"""
